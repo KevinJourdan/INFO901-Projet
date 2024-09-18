@@ -1,16 +1,14 @@
 import threading
 import queue
-import time
 from threading import Semaphore
 
 class Com:
-    def __init__(self, process_id, total_processes):
-        self.process_id = process_id  # ID unique du processus
-        self.total_processes = total_processes  # Nombre total de processus
-        self.mailboxes = [queue.Queue() for _ in range(total_processes)]  # Boîtes aux lettres pour chaque processus
-        self.lamport_clock = 0  # Horloge de Lamport
+    def __init__(self, process_id, total_processes, mailboxes):
+        self.process_id = process_id
+        self.total_processes = total_processes
+        self.mailboxes = mailboxes  # Boîtes aux lettres partagées
+        self.lamport_clock = 0
         self.clock_semaphore = Semaphore(1)  # Sémaphore pour protéger l'horloge
-        self.lock = threading.Lock()  # Pour la gestion des threads
 
     def inc_clock(self):
         """Méthode pour incrémenter l'horloge de Lamport"""
@@ -28,13 +26,13 @@ class Com:
         self.inc_clock()  # Incrémente l'horloge avant d'envoyer
         for i in range(self.total_processes):
             if i != self.process_id:  # Ne pas s'envoyer à soi-même
-                self.mailboxes[i].put((message, self.get_clock()))  # Envoie le message avec l'horloge actuelle
+                self.mailboxes[i].put((message, self.get_clock()))  # Utilise la boîte aux lettres partagée
                 print(f"[Process {self.process_id}] Message broadcasté à Process {i}: {message}")
 
     def sendTo(self, message, dest):
         """Envoie un message à un processus spécifique"""
         self.inc_clock()  # Incrémente l'horloge avant d'envoyer
-        self.mailboxes[dest].put((message, self.get_clock()))  # Envoie le message avec l'horloge actuelle
+        self.mailboxes[dest].put((message, self.get_clock()))  # Utilise la boîte aux lettres partagée
         print(f"[Process {self.process_id}] Message envoyé à Process {dest}: {message}")
 
     def receive(self):
