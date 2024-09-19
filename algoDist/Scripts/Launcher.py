@@ -1,27 +1,14 @@
-from time import sleep
-from Process import Process
-import sys
+import threading
 import queue
+from Com import Com
+from Process import Process
 
+# Code de lancement des processus
+if __name__ == "__main__":
+    total_processes = 3  # Par exemple, si tu as 3 processus
+    mailboxes = [queue.Queue() for _ in range(total_processes)]  # Crée une boîte aux lettres pour chaque processus
+    request_queue = queue.Queue()  # La file d'attente partagée pour les requêtes de section critique
 
-def launch(nbProcessToCreate: int, verbosityLevel: int, runningTime: int):
-    processes = []
-    mailboxes = [queue.Queue() for _ in range(nbProcessToCreate)]
-
-    for i in range(nbProcessToCreate):
-        processes.append(Process("P" + str(i), nbProcessToCreate, verbosityLevel, mailboxes))
-
-    sleep(runningTime)
-
-    for p in processes:
-        p.stop()
-
-
-def getParam(pos: int, default: int) -> int:
-    if len(sys.argv) > pos:
-        return int(sys.argv[pos])
-    return default
-
-
-if __name__ == '__main__':
-    launch(getParam(1, 3), getParam(3, 7), getParam(2, 15))
+    # Lancement des processus
+    for i in range(total_processes):
+        process = Process(name=f"P{i+1}", nbProcess=total_processes, verbose=True, mailboxes=mailboxes, request_queue=request_queue)
